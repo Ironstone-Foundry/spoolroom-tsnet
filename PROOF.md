@@ -173,3 +173,24 @@ Each run uses a throwaway test device with `tools/fakegateway` as the camera gat
 The fresh-account run repeats this on a new tailnet, where HTTPS is likely off: it records the `https_off` state, whether a `consentUrl` arrives and what the consent page grants (Funnel included), and that the helper reaches `running` without a restart once HTTPS is on.
 
 Results are recorded below as "Part 3: device runs, <date>", by proof number.
+
+## Part 3: device runs, 2026-10-21
+
+**Device A:** a Debian 13 LXC container (unprivileged, amd64), headless, then Docker inside it. Signed in once by the tailnet owner; removed afterwards. Tailscale v1.104.2.
+
+| Proof | Result |
+|---|---|
+| P1 sign-in | The link from `needs_login` worked; no device approval was required on this tailnet. The admin console showed the device with client version 1.104.2. |
+| P2 first certificate | 34 s in `cert_pending` on first sign-in; 0.3–0.4 s on later starts (cached). Let's Encrypt, `CN=<device>.ts.net`. Key expiry about 180 days out. |
+| HTTP/2 | **Broken in the first build**: the connection cap wrapped the TLS listener, so h2 requests reached the server as `PRI *`. Fixed (cap below TLS) with a regression test; every check below ran on the fixed build. |
+| P3 streaming | 15 min of MJPEG from a tailnet peer: 4,500 frames at a steady 5 fps, no stall. 15+ min on an iPhone (Safari) and desktop Chrome at the same time with no MJPEG reconnect; SSE reconnected twice on the phone (backgrounded page). SSE one event per second, FLV streamed, WHEP POST 201. |
+| P4 Linux | Runs unprivileged; RSS about 24 MB idle, 27–28 MB while streaming. |
+| P4 Docker | `--cap-drop ALL`, `no-new-privileges`, read-only root, no `/dev/net/tun`, no published ports: `running` on the existing sign-in, served HTTP/2, 14 MB. |
+| P7 self-check | `{"type":"check","ok":true,"status":401}`. |
+| P8 log upload | Over 40 s the helper connected only to the loopback gateway and Tailscale's control/DERP servers; never to `log.tailscale.com`. |
+| P10 sockets | Default build: one TCP listener (peerapi), here bound to loopback inside the container. Port scan from a peer: only 443 open; the gateway port was not reachable. **No-peerapi build: no TCP listener at all**, everything above still works, peer connection direct. Release builds now leave peerapi out. |
+| Upgrade | `Connection: Upgrade` → 400. |
+| `--paused` | pause → `paused`, the URL stops answering, no listeners. Restart with `--paused`: first state `paused`, no listener, no connection to anyone. `resume` → `running` with no new sign-in, same name. |
+| P6 logout | `ack ok`, `signed_out ok:true`, exit 0, state directory removed. The admin console then lists the device as **Expired** (not removed); the owner removes it. |
+
+Not yet run: Windows (P4), a device that already runs Tailscale (P5), and the fresh-account HTTPS consent run.

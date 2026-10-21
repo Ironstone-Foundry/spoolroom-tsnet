@@ -11,7 +11,7 @@ OUT="${OUT:-dist}"
 # log upload to Tailscale). Kept on purpose: acme (certificates), netstack,
 # portmapper, tailnetlock (members may use Tailnet Lock), useproxy (members
 # behind an HTTP proxy), c2n, cloud and captiveportal.
-TAGS="ts_omit_logtail,ts_omit_netlog,ts_omit_oauthkey,ts_omit_identityfederation,ts_omit_aws,ts_omit_kube,ts_omit_ssh,ts_omit_taildrop,ts_omit_drive,ts_omit_tap,ts_omit_capture,ts_omit_relayserver,ts_omit_clientupdate,ts_omit_tpm,ts_omit_webclient,ts_omit_appconnectors,ts_omit_advertiseexitnode,ts_omit_advertiseroutes,ts_omit_bird,ts_omit_conn25,ts_omit_syspolicy,ts_omit_debugeventbus,ts_omit_portlist,ts_omit_posture"
+TAGS="ts_omit_logtail,ts_omit_netlog,ts_omit_oauthkey,ts_omit_identityfederation,ts_omit_aws,ts_omit_kube,ts_omit_ssh,ts_omit_taildrop,ts_omit_drive,ts_omit_tap,ts_omit_capture,ts_omit_relayserver,ts_omit_clientupdate,ts_omit_tpm,ts_omit_webclient,ts_omit_appconnectors,ts_omit_advertiseexitnode,ts_omit_advertiseroutes,ts_omit_bird,ts_omit_conn25,ts_omit_syspolicy,ts_omit_debugeventbus,ts_omit_portlist,ts_omit_posture,ts_omit_peerapiserver,ts_omit_peerapiclient"
 # Stamp Tailscale's version so the coordination server sees a real client
 # version (1.104.2) rather than a "-dev" build. Values come from go.mod and
 # the module's recorded origin, so the build stays reproducible.

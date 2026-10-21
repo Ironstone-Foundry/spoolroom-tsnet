@@ -27,18 +27,16 @@ What it never does:
 
 ### Listening sockets
 
-The camera service listens on the tailnet only.
+The helper listens on the tailnet only: HTTPS on tailnet port 443, proxied
+to the watcher's loopback gateway. It opens no TCP port on the computer's own
+network interfaces.
 
-There is **one known exception**: once the device is signed in and running,
-Tailscale's internal peer API opens a TCP port on all of the host's network
-interfaces. tsnet does this whenever it uses its userspace network stack, and
-there is no setting to stop it.
-
-- Requests to that port from addresses outside the tailnet are refused, because Tailscale looks up the caller and finds no tailnet peer.
-- Nothing from Spoolroom is served on it.
-- The upstream issue draft is in `docs/upstream-peerapi.md`.
-
-There is also one UDP port for the encrypted tunnel itself.
+Release builds leave out Tailscale's peer API (`ts_omit_peerapiserver`,
+`ts_omit_peerapiclient`), which tsnet would otherwise bind on every host
+interface once running. The helper uses none of its features (Taildrop,
+peer DNS), and the device runs confirmed serving, streaming and sign-in work
+without it (PROOF.md, Part 3). Because nothing listens on the host network,
+no firewall prompt appears.
 
 ## Running it
 
