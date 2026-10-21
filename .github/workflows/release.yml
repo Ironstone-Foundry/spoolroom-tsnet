@@ -1,0 +1,100 @@
+# Draft: runs in the public Ironstone-Foundry/spoolroom-tsnet repo, where
+# Actions on standard runners are free.
+#
+# Two jobs so that no write permission is held while third-party code
+# (Go modules, the build) runs:
+#   build:   read-only. Tests, builds all six targets twice and compares
+#            hashes, uploads dist/ as an artifact.
+#   publish: holds contents/id-token/attestations write. Runs no project
+#            code; it re-checks SHA256SUMS, attests and creates the release.
+#
+# When the repo is created: protect tags matching v* (Settings -> Rules ->
+# a tag ruleset restricting creation, update and deletion to admins), so
+# only an admin can trigger a release.
+name: release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: go.mod
+          cache: false     # a release never reuses a cache
+
+      - name: Tag matches VERSION
+        run: test "v$(tr -d '[:space:]' < VERSION)" = "$GITHUB_REF_NAME"
+
+      - name: Test
+        run: go vet ./... && go test -race ./...
+
+      - name: Vulnerabilities
+        run: go run golang.org/x/vuln/cmd/govulncheck@v1.9.0 ./...
+
+      - name: Notices current
+        run: scripts/gen-notices.sh && git diff --exit-code THIRD_PARTY_NOTICES.md
+
+      - name: Build twice and compare hashes
+        run: scripts/verify-repro.sh
+
+      - name: Pins
+        run: scripts/print-pins.sh | tee -a "$GITHUB_STEP_SUMMARY"
+
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: dist
+          path: |
+            dist/*.gz
+            dist/SHA256SUMS
+            dist/manifest.json
+            LICENSE
+            THIRD_PARTY_NOTICES.md
+          if-no-files-found: error
+          retention-days: 7
+
+  publish:
+    needs: build
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: write      # create the release
+      id-token: write      # sign the provenance attestation
+      attestations: write
+    steps:
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: dist
+          path: out
+
+      - name: Verify the .gz files against SHA256SUMS
+        working-directory: out/dist
+        run: grep '\.gz$' SHA256SUMS | sha256sum -c -
+
+      - uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
+        with:
+          subject-checksums: out/dist/SHA256SUMS
+
+      - name: Publish
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          ts=$(sed -n 's/.*"tailscaleVersion": "\([^"]*\)".*/\1/p' out/dist/manifest.json)
+          gh release create "$GITHUB_REF_NAME" --verify-tag \
+            --title "spoolroom-tsnet $GITHUB_REF_NAME" \
+            --notes "Uses Tailscale $ts. Verify with SHA256SUMS or \`gh attestation verify\`." \
+            out/dist/*.gz out/dist/SHA256SUMS out/dist/manifest.json out/LICENSE out/THIRD_PARTY_NOTICES.md
