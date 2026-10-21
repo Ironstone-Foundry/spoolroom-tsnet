@@ -193,4 +193,16 @@ Results are recorded below as "Part 3: device runs, <date>", by proof number.
 | `--paused` | pause → `paused`, the URL stops answering, no listeners. Restart with `--paused`: first state `paused`, no listener, no connection to anyone. `resume` → `running` with no new sign-in, same name. |
 | P6 logout | `ack ok`, `signed_out ok:true`, exit 0, state directory removed. The admin console then lists the device as **Expired** (not removed); the owner removes it. |
 
-Not yet run: Windows (P4), a device that already runs Tailscale (P5), and the fresh-account HTTPS consent run.
+**Device B:** a Windows 11 VM (build 26200, Defender real-time protection on), release build without peerapi, run as SYSTEM through the guest agent. Signed in once by the tailnet owner; removed afterwards.
+
+| Proof | Result |
+|---|---|
+| P1/P2 | Sign-in worked; 35 s in `cert_pending`, then `running`. |
+| P3 | HTTP/2 401 on `/v1/info`; MJPEG 100 frames in 20 s (5 fps); SSE one event per second; WHEP 201. |
+| P4 Windows | **No TCP listener at all**, UDP only (WireGuard). No firewall rule created and no prompt. Defender: no detection. State dir ACL: owner only. Working set about 76 MB. |
+| P10 | Port scan from a peer: only 443 open (not 135/139/445/3389/5985 or the gateway port). |
+| Upgrade | 400. |
+| `--paused` | Restart with `--paused`: first state `paused`, no TCP or UDP endpoints, offline in the tailnet. `resume` → `running` with no new sign-in. |
+| P6 logout | `signed_out ok:true`, exit 0, state directory removed. |
+
+Not yet run: a user account (not SYSTEM) on Windows, a device that already runs Tailscale (P5), and the fresh-account HTTPS consent run.

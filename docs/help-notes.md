@@ -2,7 +2,7 @@
 
 Facts the help copy must reflect. Each line says whether it is verified or still to be checked by a numbered proof in PROOF.md.
 
-- **No firewall prompt.** The release build opens no port on the computer's own network, so Windows and macOS have nothing to ask about. *Verified on Linux and in Docker (Part 3); Windows to confirm on the Windows run.*
+- **No firewall prompt.** The release build opens no port on the computer's own network, so Windows and macOS have nothing to ask about. *Verified on Linux, in Docker and on Windows 11 (Part 3).*
 - **A second device.** If this computer already runs the Tailscale app, your Tailscale admin console shows two devices. That is expected. *P5.*
 - **Turning off.**
   - "Turn off" keeps the device signed in but offline.
