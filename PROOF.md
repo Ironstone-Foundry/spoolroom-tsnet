@@ -205,4 +205,13 @@ Results are recorded below as "Part 3: device runs, <date>", by proof number.
 | `--paused` | Restart with `--paused`: first state `paused`, no TCP or UDP endpoints, offline in the tailnet. `resume` → `running` with no new sign-in. |
 | P6 logout | `signed_out ok:true`, exit 0, state directory removed. |
 
-Not yet run: a user account (not SYSTEM) on Windows, a device that already runs Tailscale (P5), and the fresh-account HTTPS consent run.
+**Fresh-account run** (a brand-new free tailnet, macOS arm64, release build):
+
+| Check | Result |
+|---|---|
+| HTTPS default | Off. After sign-in the helper reported `https_off` with `need:"https_certificates"` and a `consentUrl` on `login.tailscale.com/f/serve`. MagicDNS was on (no `magicdns_off`). |
+| Consent page | Titled "Start using Serve". It enables **HTTPS certificates** and, **pre-ticked**, **Tailscale Funnel (optional)**, which "will edit the tailnet policy file to give Funnel access to all Members". The button reads "Enable HTTPS and Funnel" until Funnel is unticked. **Members must untick Funnel**; the helper never uses it. |
+| No restart | With Funnel unticked and HTTPS enabled, the helper left `https_off` on its own (`cert_pending`), got its certificate in 35 s and reached `running`; `check` ok. |
+| Logout | `signed_out ok:true`, state removed. |
+
+Not yet run: a user account (not SYSTEM) on Windows, and a device that already runs Tailscale (P5).
