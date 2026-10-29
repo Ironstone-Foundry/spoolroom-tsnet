@@ -1,0 +1,47 @@
+version: 2
+
+# One grouped PR per kind of update per week, the same shape as spoolroom-app.
+#
+# A Go module bump here is a signal, not a merge: a tailscale.com bump needs
+# `scripts/gen-notices.sh` re-run (CI's notices check fails until that is
+# committed on the PR), `scripts/verify-repro.sh`, a helper release, and new
+# pins in spoolroom-app's watcher/tsnet-pins.mjs. Tailscale patches land every
+# one to two weeks; before this file nothing watched for them.
+updates:
+  - package-ecosystem: gomod
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 1
+    groups:
+      routine:
+        applies-to: version-updates
+        patterns: ["*"]
+        update-types: ["minor", "patch"]
+      majors:
+        applies-to: version-updates
+        patterns: ["*"]
+        update-types: ["major"]
+      security:
+        applies-to: security-updates
+        patterns: ["*"]
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 2
+    groups:
+      routine:
+        applies-to: version-updates
+        patterns: ["*"]
+        update-types: ["minor", "patch"]
+      majors:
+        applies-to: version-updates
+        patterns: ["*"]
+        update-types: ["major"]
+      security:
+        applies-to: security-updates
+        patterns: ["*"]
